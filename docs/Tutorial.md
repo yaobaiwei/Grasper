@@ -2,7 +2,7 @@
 
 ### Sample datasets
 
-In the repo, we already provide a sample dataset in folder `/data`, which matches with the toy graph presented in this [**picture**](data/graph-example-1.jpg).
+In the repo, we already provide a sample dataset in folder `/data`, which matches with the toy graph presented in this [**picture**](../data/graph-example-1.jpg).
 The fold contains four subfolders: `/vertices`, `/vtx_property`, `/edge_property` and `/index`, which stores the data of vertices (graph topology), properties of vertices, properties of edges and index information respectively.
 
 #### Input format
