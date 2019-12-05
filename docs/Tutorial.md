@@ -101,7 +101,7 @@ w5
 .......
 ```
 
-**machines.cfg (one per line):**
+**ib.cfg (one per line):**
 ```bash
 #format: hostname:ibname:tcp_port:ib_port
 w1:ib1:19935:-1
