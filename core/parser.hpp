@@ -24,7 +24,7 @@ class Parser {
     enum Step_T {
         IN, OUT, BOTH, INE, OUTE, BOTHE, INV, OUTV, BOTHV, AND, AGGREGATE, AS, CAP, COUNT, DEDUP,
         GROUP, GROUPCOUNT, HAS, HASLABEL, HASKEY, HASVALUE, HASNOT, IS, KEY, LABEL, LIMIT, MAX,
-        MEAN, MIN, NOT, OR, ORDER, PROPERTIES, RANGE, SELECT, SKIP, SUM, UNION, VALUES, WHERE, COIN, REPEAT
+        MEAN, MIN, NOT, OR, ORDER, PROPERTIES, RANGE, SELECT, SKIP, SUM, UNION, VALUES, WHERE, COIN, REPEAT, UNTIL /* Bowen added until */
     };
 
     // for debug usage
@@ -71,6 +71,9 @@ class Parser {
     Config * config_;
     IndexStore * index_store_;
     string_index * indexes_;
+
+    // repeat-until matching by Bowen
+    int repeat_sub_first_idx;
 
     // IO type checking
     bool IsNumber();
@@ -151,6 +154,7 @@ class Parser {
     void ParseTraversal(const vector<string>& params, Step_T type);
     void ParseValues(const vector<string>& params);
     void ParseWhere(const vector<string>& params);
+    void ParseUntil(const vector<string>& params);
 
  public:
     // Parse query string

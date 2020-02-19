@@ -311,6 +311,7 @@ string Parser::StepToStr(int step) {
     step_str_map[GROUP] = "GROUP"; step_str_map[GROUPCOUNT] = "GROUPCOUNT"; step_str_map[HAS] = "HAS"; step_str_map[HASLABEL] = "HASLABEL"; step_str_map[HASKEY] = "HASKEY"; step_str_map[HASVALUE] = "HASVALUE"; step_str_map[HASNOT] = "HASNOT"; step_str_map[IS] = "IS"; step_str_map[KEY] = "KEY"; step_str_map[LABEL] = "LABEL"; step_str_map[LIMIT] = "LIMIT"; step_str_map[MAX] = "MAX";
     step_str_map[MEAN] = "MEAN"; step_str_map[MIN] = "MIN"; step_str_map[NOT] = "NOT"; step_str_map[OR] = "OR"; step_str_map[ORDER] = "ORDER"; step_str_map[PROPERTIES] = "PROPERTIES"; step_str_map[RANGE] = "RANGE"; step_str_map[SELECT] = "SELECT"; step_str_map[SKIP] = "SKIP"; step_str_map[SUM] = "SUM"; step_str_map[UNION] = "UNION"; step_str_map[VALUES] = "VALUES"; step_str_map[WHERE] = "WHERE"; step_str_map[COIN] = "COIN"; step_str_map[REPEAT] = "REPEAT";
 
+    step_str_map[UNTIL] = "UNTIL"; // Bowen
     return step_str_map[step];
 }
 
@@ -334,6 +335,7 @@ void Parser::Clear() {
     str2se.clear();
     min_count_ = -1;  // max of uint64_t
     first_in_sub_ = 0;
+    repeat_sub_first_idx = -1; // Bowen
 }
 
 void Parser::AppendExpert(Expert_Object& expert) {
@@ -1303,6 +1305,7 @@ void Parser::ParseCoin(const vector<string>& params) {
 }
 
 void Parser::ParseRepeat(const vector<string>& params) {
+    /* Old Implementation
     // @ Act just as union
     Expert_Object expert(EXPERT_T::REPEAT);
     // Expert_Object expert(EXPERT_T::BRANCH);
@@ -1315,6 +1318,20 @@ void Parser::ParseRepeat(const vector<string>& params) {
 
     // Parse sub query
     ParseSub(params, current, false);
+    */
+    /* New implementation by Bowen */
+    if (params.size() != 1) {
+        throw ParserException("expect exactly one parameter for repeat");
+    } else if (params[0].find("repeat") != string::npos) {
+        throw ParserException("do not support nested repeat for now");
+    } else if (repeat_sub_first_idx != -1) {
+        throw ParserException("do not support nested repeat for now");
+    }
+
+    int current = experts_.size();
+    ParseSub(params, current-1, false); // We do not add repeat into the list
+    repeat_sub_first_idx = current; // not sure
+    /* End of new implementation by Bowen */
 }
 
 void Parser::ParseSelect(const vector<string>& params) {
@@ -1416,6 +1433,28 @@ void Parser::ParseTraversal(const vector<string>& params, Step_T type) {
 
     io_type_ = (outType == Element_T::EDGE) ? IO_T::EDGE : IO_T::VERTEX;
 }
+
+/* Bowen */
+void Parser::ParseUntil(const vector<string>& params) {
+    if (params.size() != 1) {
+        throw ParserException("expect exactly one parameter for until");
+    } else if (params[0].find("repeat") != string::npos) {
+        throw ParserException("do not support nested repeat for now");
+    } else if (repeat_sub_first_idx == -1) {
+        throw ParserException("no matching repeat fonud for until");
+    }
+
+    Expert_Object expert(EXPERT_T::UNTIL);
+    expert.AddParam(repeat_sub_first_idx);
+
+    int current = experts_.size();
+    AppendExpert(expert);
+
+    // Parse sub query
+    ParseSub(params, current, true); // not sure
+    repeat_sub_first_idx = -1;
+}
+/* Bowen */
 
 void Parser::ParseValues(const vector<string>& params) {
     // @ValuesExpert params: (Element_t type, int pid...)
@@ -1535,7 +1574,8 @@ const map<string, Parser::Step_T> Parser::str2step = {
     { "values", VALUES },
     { "where", WHERE },
     { "coin", COIN },
-    { "repeat", REPEAT }
+    { "repeat", REPEAT },
+    { "until": UNTIL } // Bowen
 };
 
 const map<string, Predicate_T> Parser::str2pred = {
