@@ -348,7 +348,24 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
         }
     }
 
-    for (auto& item : id2data) {
+    //++ added by DSY
+    vector<pair<int, vector<pair<history_t, vector<value_t>>>>> id2data_vec;
+    if(experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN){
+        for(auto& item: id2data){
+            for(auto& data_pair: item.second){
+                vector<pair<history_t, vector<value_t>>> point_vec;
+                point_vec.push_back(move(data_pair));
+                id2data_vec.push_back(move(make_pair(item.first, move(point_vec))));
+            }
+        }
+    } else {
+        for (auto& item: id2data){
+            id2data_vec.push_back(move(make_pair(item.first, move(item.second))));
+        }
+    }
+    //-- end DSY
+
+    for (auto& item : id2data_vec) {    //+this line modified by DSY
         // insert data to msg
         do {
             Message msg(m);
@@ -401,7 +418,14 @@ bool Message::update_route(Meta& m, const vector<Expert_Object>& experts) {
             m.branch_infos.pop_back();
 
             return update_route(m, experts);
-        } else {
+        }
+        //++start DSY
+        else if (experts[this->meta.step].expert_type == EXPERT_T::UNTIL){
+            m.msg_type = MSG_T::SPAWN;
+            return false;
+        }
+        //--end DSY
+        else {
             // aggregate labelled branch experts to parent machine
             m.recver_nid = m.branch_infos[branch_depth].node_id;
             m.recver_tid = m.branch_infos[branch_depth].thread_id;

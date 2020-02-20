@@ -64,6 +64,9 @@ struct Meta {
     // experts chain
     vector<Expert_Object> experts;
 
+    //added by DSY
+    int his_index;
+
     std::string DebugString() const;
 };
 
