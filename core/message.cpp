@@ -374,6 +374,12 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
             // if(! route_assigned){
             msg.meta.recver_tid = core_affinity->GetThreadIdForExpert(experts[m.step].expert_type);
             // }
+
+            //++added by DSY
+            if (experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN)
+                msg.meta.his_index = item.second[0].first.size() - 1;   //save the index of shadow history and the last one is the data until insert
+            //--end DSY
+
             msg.InsertData(item.second);
             vec.push_back(move(msg));
         } while ((item.second.size() != 0));    // Data no consumed

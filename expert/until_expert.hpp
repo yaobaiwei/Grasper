@@ -97,6 +97,7 @@ private:
     // 1. The new history record is not created. Lables are not handled. Refer to as_expert.hpp
     void process_spawn(const vector<Expert_Object> & expert_objs, Message & msg){
         int tid = TidMapper::GetInstance()->GetTid();
+        map<value_t, int> his_label_table;
 
         Meta &m = msg.meta;
         Expert_Object expert_object = expert_objs[m.step];
@@ -107,7 +108,18 @@ private:
 
         for (auto& pair: data) {
             for (auto& data_point : pair.second){
-                data.push_back(std::make_pair(pair.first, data_point));
+                history_t new_his = pair.first;
+                auto iter = his_label_table.find(data_point);
+                if (iter != his_label_table.end()){
+                    new_his.push_back(move(make_pair((*iter).second + 1, data_point)));
+                    int new_label = (*iter).second + 1;
+                    his_label_table.erase(iter);
+                    his_label_table.insert(move(make_pair(data_point, new_label)));
+                } else {
+                    new_his.push_back(move(make_pair(data_point, 1)));
+                    his_label_table.insert(move(make_pair(data_point, 1)));
+                }
+                data.push_back(move(make_pair(move(new_his), data_point)));
             }
         }
 
