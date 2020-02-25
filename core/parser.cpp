@@ -1441,7 +1441,7 @@ void Parser::ParseUntil(const vector<string>& params) {
     } else if (params[0].find("repeat") != string::npos) {
         throw ParserException("do not support nested repeat for now");
     } else if (repeat_sub_first_idx == -1) {
-        throw ParserException("no matching repeat fonud for until");
+        throw ParserException("no matching repeat found for until");
     }
 
     Expert_Object expert(EXPERT_T::UNTIL);
