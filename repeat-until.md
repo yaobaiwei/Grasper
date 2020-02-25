@@ -12,9 +12,14 @@ Added file:
 
 Changed file:
 - core/type.hpp
-- core/message.cpp      changed update_route func
+- core/message.cpp      changed update_route function
 - core/message.cpp      add his_index to meta
 - core/message.cpp      modified dispatch_data for until_spawn
+
+# 2.22 (Shiyuan)
+Changed file:
+- core/until_expert.hpp     fix process_spawn function
+- core/message.cpp      modified dispatch_data to make use of his_index
 
 # 2.23 (Bowen)
 Changed file:
