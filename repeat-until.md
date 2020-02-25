@@ -2,9 +2,9 @@
 Added the support of parsing repeat-until.
 The index of first expert of Tr is stored as the first element of until's params.
 Changed file:
-- parser.cpp
-- parser.hpp
-- type.hpp      added until to expert_t
+- core/parser.cpp
+- core/parser.hpp
+- base/type.hpp              added until to expert_t
 
 # 2.20 (Shiyuan)
 Added file:
@@ -18,4 +18,8 @@ Changed file:
 
 # 2.23 (Bowen)
 Changed file:
-- expert/until_expert.hpp add the process_branch function
+- expert/until_expert.hpp       add the process_branch function
+
+# 2.25 (Bowen)
+Changed file:
+- expert/until_expert.hpp       fix typo and comment on process_spawn

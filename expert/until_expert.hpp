@@ -19,6 +19,8 @@
 
 
 struct agg_data {
+    map<string, int> path_counter;
+    pair<int, int> branch_counter;
     vector<value_t> agg_data;
     vector<pair<history_t, vector<value_t>>> msg_data;
 };
@@ -36,7 +38,27 @@ public:
         int tid = TidMapper::GetInstance()->GetTid();
 
         if (msg.meta.msg_type == MSG_T::SPAWN) {
-            process_spawn(const vector<Expert_Object> & expert_objs, Message & msg);
+            // Bowen: incomplete implementation
+            // refer to labelled_branch_expert.hpp
+            // you have to write to the data_table_ etc.
+            // added by Bowen, copy from labelled_branch_expert.hpp
+            uint64_t msg_id;
+            id_allocator_->AssignId(msg_id);
+            // set up data for sub branch collection
+            int index = 0;
+            if (msg.meta.branch_infos.size() > 0) {
+                // get index of parent branch if any
+                index = msg.meta.branch_infos[msg.meta.branch_infos.size() - 1].index;
+            }
+            mkey_t key(msg.meta.qid, msg_id, index);
+
+            typename BranchDataTable::accessor ac;
+            data_table_.insert(ac, key);
+            // send_branch_msg(tid, experts, msg, msg_id);
+            // ac->second.branch_counter = make_pair(get_steps_count(experts[msg.meta.step]), 0);
+            ac->second.branch_counter = make_pair(1, 0); // in our case, there are only one branch. not sure
+            
+            process_spawn(expert_objs, msg); // sending messages is handled in this function
         } else if (msg.meta.msg_type == MSG_T::BRANCH) {
             // get branch message key
             mkey_t key;
@@ -48,7 +70,7 @@ public:
 
             bool isReady = IsReady(ac, msg.meta, end_path);
 
-            process_barrier(tid, experts, msg, ac, isReady);
+            process_barrier(tid, expert_objs, msg, ac, isReady);
 
             if (isReady) {
                 data_table_.erase(ac);
@@ -70,28 +92,6 @@ private:
     AbstractMailbox * mailbox_;
 
     BarrierDataTable data_table_; // Bowen
-
-
-//    void EvaluateData(vector<pair<history_t, vector<value_t>>> & data, vector<PredicateValue> & pred_chain) {
-//        auto checkFunction = [&](value_t & value) {
-//            int counter = pred_chain.size();
-//            for (auto & pred : pred_chain) {
-//                if (Evaluate(pred, &value)) {
-//                    counter--;
-//                }
-//            }
-//
-//            // Not match all pred
-//            if (counter != 0) {
-//                return true;
-//            }
-//            return false;
-//        };
-//
-//        for (auto & data_pair : data) {
-//            data_pair.second.erase(remove_if(data_pair.second.begin(), data_pair.second.end(), checkFunction), data_pair.second.end());
-//        }
-//    }
 
     // Bowen: This is imcomplete
     // 1. The new history record is not created. Lables are not handled. Refer to as_expert.hpp
