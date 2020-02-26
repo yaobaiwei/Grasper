@@ -349,6 +349,12 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
     }
 
     //++ added by DSY
+    /*
+     * convert the id2data to a vector
+     * if the message is until spawn message
+     * for each data point following any history create a message for it
+     * because his_index can only store one history which is created before until_spawn expert
+     */
     vector<pair<int, vector<pair<history_t, vector<value_t>>>>> id2data_vec;
     if(experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN){
         for(auto& item: id2data){
@@ -365,7 +371,7 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
     }
     //-- end DSY
 
-    for (auto& item : id2data_vec) {    //+this line modified by DSY
+    for (auto& item : id2data_vec) {    //+this line modified by DSY use id2data vector instead of id2data
         // insert data to msg
         do {
             Message msg(m);

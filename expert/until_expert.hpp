@@ -96,7 +96,7 @@ private:
     */
     void process_spawn(const vector<Expert_Object> & expert_objs, Message & msg){
         int tid = TidMapper::GetInstance()->GetTid();
-        map<value_t, int> his_label_table;
+        map<value_t, int> his_label_table;  //used to make sure data point with same value has different label for history
 
         Meta &m = msg.meta;
         Expert_Object expert_object = expert_objs[m.step];
@@ -105,11 +105,13 @@ private:
 
         auto data_end = data.end();
 
+        //for each data point, create a new history-value_t pair
         for (auto& pair: data) {
             for (auto& data_point : pair.second){
                 history_t new_his = pair.first;
                 auto iter = his_label_table.find(data_point);
-                if (iter != his_label_table.end()){
+
+                if (iter != his_label_table.end()){ //if data point with same value already use lable t, use t+1 instead
                     new_his.push_back(move(make_pair((*iter).second + 1, data_point)));
                     int new_label = (*iter).second + 1;
                     his_label_table.erase(iter);
@@ -122,6 +124,7 @@ private:
             }
         }
 
+        //delete the original data pair
         data.erase(data.begin(), data_end);
 
         vector<int> step_vec;
