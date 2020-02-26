@@ -609,6 +609,8 @@ void Parser::ParseSteps(const vector<pair<Step_T, string>>& tokens) {
         // Where Expert
         case WHERE:
             ParseWhere(params); break;
+        case UNTIL:
+            ParseUntil(params); break;
         default:throw ParserException("Unexpected step");
         }
     }
@@ -1304,22 +1306,8 @@ void Parser::ParseCoin(const vector<string>& params) {
     AppendExpert(expert);
 }
 
+/* Bowen */
 void Parser::ParseRepeat(const vector<string>& params) {
-    /* Old Implementation
-    // @ Act just as union
-    Expert_Object expert(EXPERT_T::REPEAT);
-    // Expert_Object expert(EXPERT_T::BRANCH);
-    if (params.size() < 1) {
-        throw ParserException("expect at least one parameter for branch");
-    }
-
-    int current = experts_.size();
-    AppendExpert(expert);
-
-    // Parse sub query
-    ParseSub(params, current, false);
-    */
-    /* New implementation by Bowen */
     if (params.size() != 1) {
         throw ParserException("expect exactly one parameter for repeat");
     } else if (params[0].find("repeat") != string::npos) {
@@ -1328,11 +1316,25 @@ void Parser::ParseRepeat(const vector<string>& params) {
         throw ParserException("do not support nested repeat for now");
     }
 
-    int current = experts_.size();
-    ParseSub(params, current-1, false); // We do not add repeat into the list
-    repeat_sub_first_idx = current; // not sure
-    /* End of new implementation by Bowen */
+    int sub_step = experts_.size();
+    repeat_sub_first_idx = sub_step; // the index of first expert of repeat sub-query
+    IO_T current_type = io_type_;
+    IO_T sub_type;
+    bool first = true;
+    
+    const string &sub = params[0];
+    // restore input type before parsing next sub query
+    io_type_ = current_type;
+
+    // Parse sub-query and add to experts_ list
+    DoParse(sub);
+
+    // check sub query type
+    if (current_type != io_type_) {
+        throw ParserException("expect same input type and output type in sub query of repeat");
+    }
 }
+/* Bowen */
 
 void Parser::ParseSelect(const vector<string>& params) {
     // @SelectExpert params: ([int label_step_key, string label_step_string]..)
@@ -1451,7 +1453,7 @@ void Parser::ParseUntil(const vector<string>& params) {
     AppendExpert(expert);
 
     // Parse sub query
-    ParseSub(params, current, true); // not sure
+    ParseSub(params, current, true);
     repeat_sub_first_idx = -1;
 }
 /* Bowen */

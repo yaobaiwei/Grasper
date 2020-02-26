@@ -1,6 +1,9 @@
-//
-// Created by Oruqimaru on 20/2/2020.
-//
+/* Copyright 2019 Husky Data Lab, CUHK
+
+Authors: Hongzhi Chen (hzchen@cse.cuhk.edu.hk)
+         Bowen Wu (bwwu7@cse.cuhk.edu.hk)
+         Shiyuan Deng (sydeng7@cse.cuhk.edu.hk)
+*/
 
 #ifndef UNTIL_EXPERT_HPP_
 #define UNTIL_EXPERT_HPP_
@@ -25,7 +28,6 @@ struct agg_data {
     vector<pair<history_t, vector<value_t>>> msg_data;
 };
 
-// Bowen: we need to use a new message type instead of SPAWN to avoid confusion
 class UntilExpert : public AbstractExpert {
 using BarrierDataTable = tbb::concurrent_hash_map<mkey_t, agg_data, MkeyHashCompare>;
 
@@ -33,15 +35,10 @@ public:
     UntilExpert(int id, DataStore* data_store, int num_thread, AbstractMailbox * mailbox, CoreAffinity* core_affinity) : AbstractExpert(id, data_store, core_affinity), num_thread_(num_thread), mailbox_(mailbox), type_(EXPERT_T::UNTIL) {}
 
     // [pred_T , pred_params]...
-    // Bowen: cannot let the expert_objs be a constant reference
     void process(vector<Expert_Object> & expert_objs, Message & msg) {
         int tid = TidMapper::GetInstance()->GetTid();
 
         if (msg.meta.msg_type == MSG_T::SPAWN) {
-            // Bowen: incomplete implementation
-            // refer to labelled_branch_expert.hpp
-            // you have to write to the data_table_ etc.
-            // added by Bowen, copy from labelled_branch_expert.hpp
             uint64_t msg_id;
             id_allocator_->AssignId(msg_id);
             // set up data for sub branch collection
@@ -54,8 +51,6 @@ public:
 
             typename BranchDataTable::accessor ac;
             data_table_.insert(ac, key);
-            // send_branch_msg(tid, experts, msg, msg_id);
-            // ac->second.branch_counter = make_pair(get_steps_count(experts[msg.meta.step]), 0);
             ac->second.branch_counter = make_pair(1, 0); // in our case, there are only one branch. not sure
             
             process_spawn(expert_objs, msg); // sending messages is handled in this function
@@ -72,6 +67,7 @@ public:
 
             process_barrier(tid, expert_objs, msg, ac, isReady);
 
+            // if all messages are collected
             if (isReady) {
                 data_table_.erase(ac);
             }
@@ -91,10 +87,13 @@ private:
     // Pointer of mailbox
     AbstractMailbox * mailbox_;
 
-    BarrierDataTable data_table_; // Bowen
+    BarrierDataTable data_table_;
 
-    // Bowen: This is imcomplete
-    // 1. The new history record is not created. Lables are not handled. Refer to as_expert.hpp
+    /*
+        Created by DSY
+        1. Write into the history
+        2. Send messages
+    */
     void process_spawn(const vector<Expert_Object> & expert_objs, Message & msg){
         int tid = TidMapper::GetInstance()->GetTid();
         map<value_t, int> his_label_table;
@@ -116,7 +115,7 @@ private:
                     his_label_table.erase(iter);
                     his_label_table.insert(move(make_pair(data_point, new_label)));
                 } else {
-                    new_his.push_back(move(make_pair(data_point, 1)));
+                    new_his.push_back(move(make_pair(1, data_point)));
                     his_label_table.insert(move(make_pair(data_point, 1)));
                 }
                 data.push_back(move(make_pair(move(new_his), data_point)));
@@ -142,13 +141,13 @@ private:
         auto& msg_data = ac->second.msg_data;
         int his_index = msg.his_index; // index of the relevant history record
 
-        // move msg data to data table
+        // move msg.data to data table
         for (auto& p : msg.data) {
+            // check if the same ancestor has already existed
             auto itr = find_if(msg_data.begin(), msg_data.end(),
                 [&p](const pair<history_t, vector<value_t>>& element){ return element.first.back() == p.first[his_index];});
             if (itr == msg_data.end()) {
-                // erase the history written by Tu
-                p.first.erase(p.first.begin()+his_index+1, p.first.end());
+                p.first.erase(p.first.begin()+his_index+1, p.first.end()); // erase the history written by Tu
                 itr = msg_data.insert(itr, make_pair(move(p.first), vector<value_t>()));
             }
 
@@ -160,27 +159,28 @@ private:
         if (isReady) {
             const Expert_Object& expert = experts[msg.meta.step];
             assert(expert.params.size() == 1);
-            int repeat_entrance = Tool::value_t2int(expert.params[0]);
+            int repeat_entrance = Tool::value_t2int(expert.params[0]); // the index of first expert in repeat sub query
 
             // check if the traverser pass the condition
             vector<pair<history_t, vector<value_t>>> pass_msg_data;
             vector<pair<history_t, vector<value_t>>> fail_msg_data;
             for (auto& p : msg_data) {
+                // restore the data to the state before until sub query
                 pair<history_t, vector<value_t>> tmp;
                 tmp = make_pair(move(p.first), vector<value_t>())
                 tmp.second.insert(tmp.second.end(), tmp.first.back())
                 tmp.first.pop_back();
 
-                if(p.second.size() == 0) {
+                if(p.second.size() == 0) { // if the data is empty, the condition fails
                     fail_msg_data.insert(fail_msg_data.end(), move(tmp));
                 } else {
                     pass_msg_data.insert(pass_msg_data.end(), move(tmp));
                 }
             }
 
-            vector<Message> v_fail;
+            vector<Message> v_fail; // failed data
             int current_next_expert = expert_object.next_expert;
-            expert_object.next_expert = Tool::value_t2int(expert_object.params.at(0));
+            expert_object.next_expert = repeat_entrance; // change the next expert to the first expert in the repeat sub-query
             
             // send input data and history back to repeat
             msg.CreateNextMsg(experts, fail_msg_data, num_thread_, data_store_, core_affinity_, v_fail);
@@ -190,7 +190,7 @@ private:
             }
 
             vector<Message> v_pass;
-            expert_object.next_expert = current_next_expert;
+            expert_object.next_expert = current_next_expert; // restore the next expert
 
             // send input data and history to next expert
             msg.CreateNextMsg(experts, pass_msg_data, num_thread_, data_store_, core_affinity_, v_pass);
@@ -202,6 +202,7 @@ private:
     }
 
     // Check if msg all collected
+    // copied from barrier_expert.hpp
     static bool IsReady(typename BarrierDataTable::accessor& ac, Meta& m, string end_path) {
         map<string, int>& counter = ac->second.path_counter;
         string msg_path = m.msg_path;
@@ -235,6 +236,7 @@ private:
     // get msg info
     // key : mkey_t, identifier of msg
     // end_path: identifier of msg collection completed
+    // copied from barrier_expert.hpp
     static void GetMsgInfo(Message& msg, mkey_t &key, string &end_path) {
         // init info
         uint64_t msg_id = 0;
