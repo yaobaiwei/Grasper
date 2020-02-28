@@ -72,6 +72,7 @@ class Parser {
     IndexStore * index_store_;
     string_index * indexes_;
 
+    // the index of first expert of repeat sub-query
     int repeat_sub_first_idx;
 
     // IO type checking
