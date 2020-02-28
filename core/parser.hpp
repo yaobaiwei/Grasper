@@ -24,7 +24,7 @@ class Parser {
     enum Step_T {
         IN, OUT, BOTH, INE, OUTE, BOTHE, INV, OUTV, BOTHV, AND, AGGREGATE, AS, CAP, COUNT, DEDUP,
         GROUP, GROUPCOUNT, HAS, HASLABEL, HASKEY, HASVALUE, HASNOT, IS, KEY, LABEL, LIMIT, MAX,
-        MEAN, MIN, NOT, OR, ORDER, PROPERTIES, RANGE, SELECT, SKIP, SUM, UNION, VALUES, WHERE, COIN, REPEAT, UNTIL /* Bowen added until */
+        MEAN, MIN, NOT, OR, ORDER, PROPERTIES, RANGE, SELECT, SKIP, SUM, UNION, VALUES, WHERE, COIN, REPEAT, UNTIL
     };
 
     // for debug usage
@@ -72,7 +72,6 @@ class Parser {
     IndexStore * index_store_;
     string_index * indexes_;
 
-    // repeat-until matching by Bowen
     int repeat_sub_first_idx;
 
     // IO type checking

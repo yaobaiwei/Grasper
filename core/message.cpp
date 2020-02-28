@@ -348,7 +348,6 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
         }
     }
 
-    //++ added by DSY
     /*
      * convert the id2data to a vector
      * if the message is until spawn message
@@ -356,22 +355,21 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
      * because his_index can only store one history which is created before until_spawn expert
      */
     vector<pair<int, vector<pair<history_t, vector<value_t>>>>> id2data_vec;
-    if(experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN){
-        for(auto& item: id2data){
-            for(auto& data_pair: item.second){
+    if (experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN) {
+        for (auto& item : id2data) {
+            for (auto& data_pair : item.second) {
                 vector<pair<history_t, vector<value_t>>> point_vec;
                 point_vec.push_back(move(data_pair));
                 id2data_vec.push_back(move(make_pair(item.first, move(point_vec))));
             }
         }
     } else {
-        for (auto& item: id2data){
+        for (auto& item : id2data) {
             id2data_vec.push_back(move(make_pair(item.first, move(item.second))));
         }
     }
-    //-- end DSY
 
-    for (auto& item : id2data_vec) {    //+this line modified by DSY use id2data vector instead of id2data
+    for (auto& item : id2data_vec) {  // use id2data vector instead of id2data
         // insert data to msg
         do {
             Message msg(m);
@@ -381,10 +379,8 @@ void Message::dispatch_data(Meta& m, const vector<Expert_Object>& experts, vecto
             msg.meta.recver_tid = core_affinity->GetThreadIdForExpert(experts[m.step].expert_type);
             // }
 
-            //++added by DSY
             if (experts[this->meta.step].expert_type ==  EXPERT_T::UNTIL && this->meta.msg_type == MSG_T::SPAWN)
-                msg.meta.his_index = item.second[0].first.size() - 1;   //save the index of shadow history and the last one is the data until insert
-            //--end DSY
+                msg.meta.his_index = item.second[0].first.size() - 1;  // save the index of shadow history and the last one is the data until insert
 
             msg.InsertData(item.second);
             vec.push_back(move(msg));
@@ -430,14 +426,10 @@ bool Message::update_route(Meta& m, const vector<Expert_Object>& experts) {
             m.branch_infos.pop_back();
 
             return update_route(m, experts);
-        }
-        //++start DSY
-        else if (experts[this->meta.step].expert_type == EXPERT_T::UNTIL){
+        } else if (experts[this->meta.step].expert_type == EXPERT_T::UNTIL) {
             m.msg_type = MSG_T::SPAWN;
             return false;
-        }
-        //--end DSY
-        else {
+        } else {
             // aggregate labelled branch experts to parent machine
             m.recver_nid = m.branch_infos[branch_depth].node_id;
             m.recver_tid = m.branch_infos[branch_depth].thread_id;

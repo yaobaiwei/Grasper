@@ -11,7 +11,7 @@ Added file:
 - expert/until_expert.hpp
 
 Changed file:
-- core/type.hpp
+- base/type.hpp
 - core/message.cpp      changed update_route function
 - core/message.cpp      add his_index to meta
 - core/message.cpp      modified dispatch_data for until_spawn

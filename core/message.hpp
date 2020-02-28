@@ -64,7 +64,7 @@ struct Meta {
     // experts chain
     vector<Expert_Object> experts;
 
-    //added by DSY
+    //store history length before until spawn function
     int his_index;
 
     std::string DebugString() const;

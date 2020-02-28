@@ -311,7 +311,7 @@ string Parser::StepToStr(int step) {
     step_str_map[GROUP] = "GROUP"; step_str_map[GROUPCOUNT] = "GROUPCOUNT"; step_str_map[HAS] = "HAS"; step_str_map[HASLABEL] = "HASLABEL"; step_str_map[HASKEY] = "HASKEY"; step_str_map[HASVALUE] = "HASVALUE"; step_str_map[HASNOT] = "HASNOT"; step_str_map[IS] = "IS"; step_str_map[KEY] = "KEY"; step_str_map[LABEL] = "LABEL"; step_str_map[LIMIT] = "LIMIT"; step_str_map[MAX] = "MAX";
     step_str_map[MEAN] = "MEAN"; step_str_map[MIN] = "MIN"; step_str_map[NOT] = "NOT"; step_str_map[OR] = "OR"; step_str_map[ORDER] = "ORDER"; step_str_map[PROPERTIES] = "PROPERTIES"; step_str_map[RANGE] = "RANGE"; step_str_map[SELECT] = "SELECT"; step_str_map[SKIP] = "SKIP"; step_str_map[SUM] = "SUM"; step_str_map[UNION] = "UNION"; step_str_map[VALUES] = "VALUES"; step_str_map[WHERE] = "WHERE"; step_str_map[COIN] = "COIN"; step_str_map[REPEAT] = "REPEAT";
 
-    step_str_map[UNTIL] = "UNTIL"; // Bowen
+    step_str_map[UNTIL] = "UNTIL";
     return step_str_map[step];
 }
 
@@ -335,7 +335,7 @@ void Parser::Clear() {
     str2se.clear();
     min_count_ = -1;  // max of uint64_t
     first_in_sub_ = 0;
-    repeat_sub_first_idx = -1; // Bowen
+    repeat_sub_first_idx = -1;
 }
 
 void Parser::AppendExpert(Expert_Object& expert) {
@@ -1306,7 +1306,6 @@ void Parser::ParseCoin(const vector<string>& params) {
     AppendExpert(expert);
 }
 
-/* Bowen */
 void Parser::ParseRepeat(const vector<string>& params) {
     if (params.size() != 1) {
         throw ParserException("expect exactly one parameter for repeat");
@@ -1317,11 +1316,11 @@ void Parser::ParseRepeat(const vector<string>& params) {
     }
 
     int sub_step = experts_.size();
-    repeat_sub_first_idx = sub_step; // the index of first expert of repeat sub-query
+    repeat_sub_first_idx = sub_step;  // the index of first expert of repeat sub-query
     IO_T current_type = io_type_;
     IO_T sub_type;
     bool first = true;
-    
+
     const string &sub = params[0];
     // restore input type before parsing next sub query
     io_type_ = current_type;
@@ -1334,7 +1333,6 @@ void Parser::ParseRepeat(const vector<string>& params) {
         throw ParserException("expect same input type and output type in sub query of repeat");
     }
 }
-/* Bowen */
 
 void Parser::ParseSelect(const vector<string>& params) {
     // @SelectExpert params: ([int label_step_key, string label_step_string]..)
@@ -1436,7 +1434,6 @@ void Parser::ParseTraversal(const vector<string>& params, Step_T type) {
     io_type_ = (outType == Element_T::EDGE) ? IO_T::EDGE : IO_T::VERTEX;
 }
 
-/* Bowen */
 void Parser::ParseUntil(const vector<string>& params) {
     if (params.size() != 1) {
         throw ParserException("expect exactly one parameter for until");
@@ -1456,7 +1453,6 @@ void Parser::ParseUntil(const vector<string>& params) {
     ParseSub(params, current, true);
     repeat_sub_first_idx = -1;
 }
-/* Bowen */
 
 void Parser::ParseValues(const vector<string>& params) {
     // @ValuesExpert params: (Element_t type, int pid...)
@@ -1577,7 +1573,7 @@ const map<string, Parser::Step_T> Parser::str2step = {
     { "where", WHERE },
     { "coin", COIN },
     { "repeat", REPEAT },
-    { "until": UNTIL } // Bowen
+    { "until": UNTIL }
 };
 
 const map<string, Predicate_T> Parser::str2pred = {
