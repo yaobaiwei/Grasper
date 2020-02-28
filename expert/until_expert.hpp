@@ -141,7 +141,8 @@ using BarrierDataTable = tbb::concurrent_hash_map<mkey_t, agg_data, MkeyHashComp
                 history_t new_his = pair.first;
                 auto iter = his_label_table.find(data_point);
 
-                if (iter != his_label_table.end()) {  // if data point with same value already use lable t, use t+1 instead
+                if (iter != his_label_table.end()) {  
+                    // if data point with same value already use lable t, use t+1 instead
                     new_his.push_back(move(make_pair((*iter).second + 1, data_point)));
                     int new_label = (*iter).second + 1;
                     his_label_table.erase(iter);
