@@ -76,6 +76,7 @@ int TCPMailbox::Send(int tid, const Message & msg) {
         pthread_spin_lock(&locks[pcode]);
         if (senders_.find(pcode) == senders_.end()) {
             cout << "Cannot find dst_node port num" << endl;
+            pthread_spin_unlock(&locks[pcode]);
             return 0;
         }
 
