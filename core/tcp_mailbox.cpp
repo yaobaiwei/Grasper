@@ -24,6 +24,8 @@ void TCPMailbox::Init(vector<Node> & nodes) {
     receivers_.resize(config_->global_num_threads);
     for (int tid = 0; tid < config_->global_num_threads; tid++) {
         receivers_[tid] = new zmq::socket_t(context, ZMQ_PULL);
+        // Set 10 ms timeout to avoid permanent blocking of local recev buffer
+        receivers_[tid]->setsockopt(ZMQ_RCVTIMEO, 10);
         char addr[64] = "";
         sprintf(addr, "tcp://*:%d", my_node_.tcp_port + 1 + tid);
         receivers_[tid]->bind(addr);
@@ -99,9 +101,7 @@ bool TCPMailbox::TryRecv(int tid, Message & msg) {
     obinstream um;
 
     // Try tcp recv
-    if (receivers_[tid]->recv(&zmq_msg) < 0) {
-        cout << "Node " << my_node_.get_local_rank() << " recvs with error " << strerror(errno) << std::endl;
-    } else {
+    if (receivers_[tid]->recv(&zmq_msg)) {
         char* buf = new char[zmq_msg.size()];
         memcpy(buf, zmq_msg.data(), zmq_msg.size());
         um.assign(buf, zmq_msg.size(), 0);
