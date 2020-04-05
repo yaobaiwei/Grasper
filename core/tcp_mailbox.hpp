@@ -1,7 +1,7 @@
 /* Copyright 2019 Husky Data Lab, CUHK
 
 Authors: Changji Li (cjli@cse.cuhk.edu.hk)
-
+         Hongzhi Chen (hzchen@cse.cuhk.edu.hk)
 */
 
 #pragma once
@@ -20,6 +20,7 @@ Authors: Changji Li (cjli@cse.cuhk.edu.hk)
 #include "base/thread_safe_queue.hpp"
 #include "core/abstract_mailbox.hpp"
 #include "core/message.hpp"
+#include "utils/simple_spinlock_guard.hpp"
 #include "third_party/zmq.hpp"
 
 #include <tbb/concurrent_unordered_map.h>
@@ -48,11 +49,12 @@ class TCPMailbox : public AbstractMailbox {
         uint64_t rr_cnt;  // choosing local or remote
     } __attribute__((aligned(CLINE)));
     scheduler_t *schedulers;
+    pthread_spinlock_t *recv_locks_ = nullptr;
 
     ThreadSafeQueue<Message>** local_msgs;
 
     // Ratio for choosing local msg over choosing remote msg
-    int local_remote_ratio;
+    int rr_size;
 
     inline int port_code (int nid, int tid) { return nid * config_->global_num_threads + tid; }
 

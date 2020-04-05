@@ -389,7 +389,10 @@ class Worker {
 
         // set the in-memory layout for RDMA buf
         Buffer * buf = new Buffer(my_node_);
-        cout << "Worker" << my_node_.get_local_rank() << ": DONE -> Register RDMA MEM, SIZE = " << buf->GetBufSize() << endl;
+        if (config_->global_use_rdma)
+            cout << "Worker" << my_node_.get_local_rank() << ": DONE -> Register RDMA MEM, SIZE = " << buf->GetBufSize() << endl;
+        else
+            cout << "Worker" << my_node_.get_local_rank() << ": DONE -> Register MEM for KVS, SIZE = " << buf->GetBufSize() << endl;
 
         AbstractMailbox * mailbox;
         if (config_->global_use_rdma)

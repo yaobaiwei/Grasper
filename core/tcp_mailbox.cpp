@@ -1,7 +1,7 @@
 /* Copyright 2019 Husky Data Lab, CUHK
 
 Authors: Changji Li (cjli@cse.cuhk.edu.hk)
-
+         Hongzhi Chen (hzchen@cse.cuhk.edu.hk)
 */
 
 #include "core/tcp_mailbox.hpp"
@@ -18,19 +18,16 @@ TCPMailbox::~TCPMailbox() {
             s.second = NULL;
         }
     }
+
+    for (int i = 0; i < config_->global_num_threads; i++) {
+        delete local_msgs[i];
+    }
+
+    free(schedulers);
+    free(local_msgs);
 }
 
 void TCPMailbox::Init(vector<Node> & nodes) {
-    receivers_.resize(config_->global_num_threads);
-    for (int tid = 0; tid < config_->global_num_threads; tid++) {
-        receivers_[tid] = new zmq::socket_t(context, ZMQ_PULL);
-        // Set 10 ms timeout to avoid permanent blocking of local recev buffer
-        receivers_[tid]->setsockopt(ZMQ_RCVTIMEO, 10);
-        char addr[64] = "";
-        sprintf(addr, "tcp://*:%d", my_node_.tcp_port + 1 + tid);
-        receivers_[tid]->bind(addr);
-    }
-
     for (int nid = 0; nid < config_->global_num_workers; nid++) {
         Node & r_node = GetNodeById(nodes, nid + 1);
         string ibname = r_node.ibname;
@@ -46,10 +43,25 @@ void TCPMailbox::Init(vector<Node> & nodes) {
         }
     }
 
-    locks = (pthread_spinlock_t *)malloc(sizeof(pthread_spinlock_t) * (config_->global_num_threads * config_->global_num_workers));
+    receivers_.resize(config_->global_num_threads);
+    for (int tid = 0; tid < config_->global_num_threads; tid++) {
+        receivers_[tid] = new zmq::socket_t(context, ZMQ_PULL);
+        // Set 10 ms timeout to avoid permanent blocking of local recev buffer
+        // receivers_[tid]->setsockopt(ZMQ_RCVTIMEO, 10);
+        char addr[64] = "";
+        sprintf(addr, "tcp://*:%d", my_node_.tcp_port + 1 + tid);
+        receivers_[tid]->bind(addr);
+    }
+
+    locks = (pthread_spinlock_t *)malloc(sizeof(pthread_spinlock_t) * 
+                (config_->global_num_threads * config_->global_num_workers));
     for (int n = 0; n < config_->global_num_workers; n++) {
         for (int t = 0; t < config_->global_num_threads; t++)
             pthread_spin_init(&locks[n * config_->global_num_threads + t], 0);
+    }
+    recv_locks_ = (pthread_spinlock_t *)malloc(sizeof(pthread_spinlock_t) * config_->global_num_threads);
+    for (int i = 0; i < config_->global_num_threads; i++) {
+        pthread_spin_init(&recv_locks_[i], 0);
     }
 
     schedulers = (scheduler_t *)malloc(sizeof(scheduler_t) * config_->global_num_threads);
@@ -59,8 +71,7 @@ void TCPMailbox::Init(vector<Node> & nodes) {
     for (int i = 0; i < config_->global_num_threads; i++) {
         local_msgs[i] = new ThreadSafeQueue<Message>();
     }
-
-    local_remote_ratio = 3;
+    rr_size = 3;
 }
 
 int TCPMailbox::Send(int tid, const Message & msg) {
@@ -88,7 +99,11 @@ int TCPMailbox::Send(int tid, const Message & msg) {
 }
 
 bool TCPMailbox::TryRecv(int tid, Message & msg) {
-    int type = (schedulers[tid].rr_cnt++) % local_remote_ratio;
+    SimpleSpinLockGuard lock_guard(recv_locks_ + tid);
+    int type = (schedulers[tid].rr_cnt++) % rr_size;
+
+    // Try local message queue in higher priority
+    // Use round-robin to avoid starvation
     if (type != 0) {
         // Try local msg queue with higher priority
         if (local_msgs[tid]->Size() != 0) {
@@ -101,7 +116,15 @@ bool TCPMailbox::TryRecv(int tid, Message & msg) {
     obinstream um;
 
     // Try tcp recv
-    if (receivers_[tid]->recv(&zmq_msg)) {
+    int recv_ret = receivers_[tid]->recv(&zmq_msg, ZMQ_DONTWAIT);
+    if (recv_ret <= 0) {
+        if (errno == EAGAIN) {
+            // Do nothing.
+            // Non-blocking mode was requested and no messages are available at the moment.
+        } else {
+            cout << "Node " << my_node_.get_local_rank() << " recvs with error " << strerror(errno) << std::endl;
+        }
+    } else {
         char* buf = new char[zmq_msg.size()];
         memcpy(buf, zmq_msg.data(), zmq_msg.size());
         um.assign(buf, zmq_msg.size(), 0);
