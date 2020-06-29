@@ -1,5 +1,7 @@
 # Grasper
 
+#### Unfortunately, this project has been closed source since 29th June, 2020, due to some commercial reasons. But it is still welcome to use Grasper for academic purposes. Please contact [Dr. Hongzhi CHEN](https://yaobaiwei.github.io/) to fetch the source code if you want to play with Grasper or evaluate Grasper for academic comparison/research.
+
 Grasper is an RDMA-based high performance distributed system for OLAP on property graphs.
 
 Graph analytics has a broad spectrum of applications in both academia and industry. However, processing online graph analytical queries (or OLAP) remains to be challenging since it has much stricter requirements on both latency and throughput. Existing systems suffer from various performance problems due to the key challenging factors as follows:
@@ -47,6 +49,7 @@ Please follow this [**tutorial**](docs/Tutorial.md).
 
 [**SoCC 2019**] [Grasper: A High Performance Distributed System for OLAP on Property Graphs](docs/Grasper_SoCC19.pdf). Hongzhi Chen, Changji Li, Juncheng Fang, Chenghuan Huang, James Cheng, Jian Zhang, Yifan Hou, Xiao Yan.
 
+[**SIGMOD 2020**] [High Performance Distributed OLAP on Property Graphs with Grasper](docs/Grasper_SIGMOD20.pdf). Hongzhi Chen, Bowen Wu, Shiyuan Deng, Chenghuan Huang, Changji Li, Yichao Li, James Cheng.
 
 ## License
 
