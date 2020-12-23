@@ -1,6 +1,5 @@
 # Grasper
 
-#### Unfortunately, this project has been closed source since 29th June, 2020, due to some commercial reasons. But it is still welcome to use Grasper for academic purposes. Please contact [Dr. Hongzhi CHEN](https://yaobaiwei.github.io/) to fetch the source code if you want to play with Grasper or evaluate Grasper for academic comparison/research.
 
 Grasper is an RDMA-based high performance distributed system for OLAP on property graphs.
 
