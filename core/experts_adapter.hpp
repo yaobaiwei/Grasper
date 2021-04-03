@@ -87,6 +87,7 @@ class ExpertAdapter {
         experts_[EXPERT_T::TRAVERSAL] = unique_ptr<AbstractExpert>(new TraversalExpert(id ++, data_store_, num_thread_, mailbox_, core_affinity_));
         experts_[EXPERT_T::VALUES] = unique_ptr<AbstractExpert>(new ValuesExpert(id ++, data_store_, node_.get_local_rank(), num_thread_, mailbox_, core_affinity_));
         experts_[EXPERT_T::WHERE] = unique_ptr<AbstractExpert>(new WhereExpert(id ++, data_store_, num_thread_, mailbox_, core_affinity_));
+        experts_[EXPERT_T::UNTIL] = unique_ptr<AbstractExpert>(new UntilExpert(id ++, data_store_, num_thread_, mailbox_, core_affinity_));
         // TODO(future) add more
 
         timer::init_timers((experts_.size() + timer_offset) * num_thread_);
