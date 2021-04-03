@@ -22,13 +22,13 @@ access patterns.
 
 **Requirements**
 
-To install Grasper's dependencies (G++, MPI, JDK, HDFS2), please follow the instructions in [here](http://www.cse.cuhk.edu.hk/systems/gminer/deploy.html).
+To install Grasper's dependencies (G++[ver 5.2.0], MPI, JDK, HDFS2), please follow the instructions in [here](http://www.cse.cuhk.edu.hk/systems/gminer/deploy.html).
 In addition, we also request the following libraries:
 * [ZeroMQ](https://zeromq.org/download/)
 * [GLog](https://github.com/google/glog)
 * [Libibverbs-1.2.0](https://git.kernel.org/pub/scm/libs/infiniband/libibverbs.git)
 * [Intel TBB](https://github.com/intel/tbb)
-* [Intel MKL](https://software.intel.com/en-us/articles/intelr-mkl-and-c-template-libraries)
+* [Intel MKL](https://software.intel.com/en-us/articles/intelr-mkl-and-c-template-libraries)`[Major version: 2017; Minor version: 0; Update version: 4]`
 
 **Build**
 
