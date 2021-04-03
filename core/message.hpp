@@ -64,9 +64,6 @@ struct Meta {
     // experts chain
     vector<Expert_Object> experts;
 
-    //store history length before until spawn function
-    int his_index;
-
     std::string DebugString() const;
 };
 
